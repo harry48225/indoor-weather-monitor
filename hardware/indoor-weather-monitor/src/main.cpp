@@ -8,10 +8,15 @@
 
 #define HOSTNAME "temperature-tentacle"
 
+#define SENSOR_DELAY 60000
+
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
 const char* SERVER_HOSTNAME = "fangorn";
+
+float temperature_offset = -1;
+
 
 Adafruit_HTS221 hts;
 
@@ -27,6 +32,8 @@ void setup(void) {
     while (1) { delay(10); }
   }
   Serial.println("HTS221 Found!");
+
+  hts.setDataRate(HTS221_RATE_ONE_SHOT);
 
   Serial.print("Data rate set to: ");
   switch (hts.getDataRate()) {
@@ -84,7 +91,7 @@ void setup(void) {
   Serial.println();
 
   mqttClient.setServer(server_ip, 1883);
-  
+
   // attempt to connect to the broker with "temperature_tentacle" id
   Serial.println("attempting connected to MQTT broker");
   while (!mqttClient.connect(HOSTNAME)) {
@@ -101,7 +108,14 @@ void loop() {
   
   sensors_event_t temp;
   sensors_event_t humidity;
-  hts.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
+  hts.setActive(true);
+  hts.begin_I2C();
+  delay(100);
+  while (!hts.getEvent(&humidity, &temp)) {// populate temp and humidity objects with fresh data
+    delay(100);
+    Serial.println("waiting");
+  }
+  hts.setActive(false);
   Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temp.temperature, humidity.relative_humidity);
 
   // attempt to publish the data
@@ -109,5 +123,12 @@ void loop() {
   mqttClient.publish("bedroom/shelf/temperature", String(temp.temperature).c_str());
   mqttClient.publish("bedroom/shelf/relative_humidity", String(humidity.relative_humidity).c_str());
 
-  delay(500);
+  int counter = 0;
+
+  while (counter < SENSOR_DELAY) {
+
+    mqttClient.loop();
+    counter += 10;
+    delay(10);
+  }
 }
