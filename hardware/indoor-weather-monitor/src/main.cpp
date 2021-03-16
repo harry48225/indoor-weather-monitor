@@ -11,9 +11,10 @@
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
-const char* server = "192.168.0.69";
+const char* SERVER_HOSTNAME = "fangorn";
 
 Adafruit_HTS221 hts;
+
 void setup(void) {
   Serial.begin(115200);
   while (!Serial) delay(10);     // will pause Zero, Leonardo, etc until serial console opens
@@ -49,9 +50,9 @@ void setup(void) {
 
   Serial.printf("\n connected!, ip: ");
   Serial.print(WiFi.localIP());
+  Serial.println();
 
-  // setup mDNS - might not be nessesary
-
+  // setup mDNS
   if (!MDNS.begin(HOSTNAME)) {
         Serial.println("Error setting up MDNS responder!");
         while(1){
@@ -61,18 +62,36 @@ void setup(void) {
         }
   }
 
+  // find the ip of the server, by resolving the hostname
+
+  struct ip4_addr server;
+  server.addr = 0;
+
+  esp_err_t err = mdns_query_a(SERVER_HOSTNAME, 20000, &server);
+  if(err){
+    if(err == ESP_ERR_NOT_FOUND){
+        Serial.println("Host was not found!");
+        return;
+    }
+    Serial.println("Query Failed");
+    return;
+  }
   // connect to mqtt broker
 
-  mqttClient.setServer(server, 1883);
+  char* server_ip;
+  asprintf(&server_ip, IPSTR, IP2STR(&server));
+  Serial.printf("found: %s.local at ip: %s", SERVER_HOSTNAME, server_ip);
+  Serial.println();
 
+  mqttClient.setServer(server_ip, 1883);
+  
   // attempt to connect to the broker with "temperature_tentacle" id
+  Serial.println("attempting connected to MQTT broker");
+  while (!mqttClient.connect(HOSTNAME)) {
+    Serial.print(".");
+  }
 
-  if (mqttClient.connect(HOSTNAME)) {
-    Serial.println("Connected to mqtt broker established");
-  }
-  else {
-    Serial.println("failed connection");
-  }
+  Serial.println("Connected to mqtt broker established");
 
 }
 
@@ -87,8 +106,8 @@ void loop() {
 
   // attempt to publish the data
 
-  mqttClient.publish("temperature", String(temp.temperature).c_str());
-  mqttClient.publish("relative_humidity", String(humidity.relative_humidity).c_str());
+  mqttClient.publish("bedroom/shelf/temperature", String(temp.temperature).c_str());
+  mqttClient.publish("bedroom/shelf/relative_humidity", String(humidity.relative_humidity).c_str());
 
   delay(500);
 }
