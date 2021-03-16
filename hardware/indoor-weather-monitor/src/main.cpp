@@ -1,16 +1,11 @@
 // Basic demo for reading Humidity and Temperature
 #include <Wire.h>
+#include "WiFi.h"
+#include "ESPmDNS.h"
 #include <Adafruit_HTS221.h>
 #include <Adafruit_Sensor.h>
 
-// For SPI mode, we need a CS pin
-#define HTS_CS 10
-// For software-SPI mode we need SCK/MOSI/MISO pins
-#define HTS_SCK 13
-#define HTS_MISO 12
-#define HTS_MOSI 11
-
-#define TEST "TEST"
+#define HOSTNAME "temperature-tentacle"
 
 Adafruit_HTS221 hts;
 void setup(void) {
@@ -21,17 +16,11 @@ void setup(void) {
 
   // Try to initialize!
   if (!hts.begin_I2C()) {
-//  if (!hts.begin_SPI(HTS_CS)) {
-//  if (!hts.begin_SPI(HTS_CS, HTS_SCK, HTS_MISO, HTS_MOSI)) {
     Serial.println("Failed to find HTS221 chip");
     while (1) { delay(10); }
   }
   Serial.println("HTS221 Found!");
 
-  Serial.println(WIFI_SSID);
-  Serial.println(WIFI_PASS);
-
-//  hts.setDataRate(HTS221_RATE_1_HZ);
   Serial.print("Data rate set to: ");
   switch (hts.getDataRate()) {
    case HTS221_RATE_ONE_SHOT: Serial.println("One Shot"); break;
@@ -40,6 +29,30 @@ void setup(void) {
    case HTS221_RATE_12_5_HZ: Serial.println("12.5 Hz"); break;
   }
 
+  // connect to the wifi network
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  Serial.printf("trying to connect to: %s with password: %s \n", WIFI_SSID, WIFI_PASS);
+
+  WiFi.setHostname(HOSTNAME);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.printf("\n connected!, ip: ");
+  Serial.print(WiFi.localIP());
+
+  if (!MDNS.begin(HOSTNAME)) {
+        Serial.println("Error setting up MDNS responder!");
+        while(1){
+            delay(1000);
+
+            // Maybe add a pin blink here
+        }
+    }
+
 }
 
 void loop() {
@@ -47,8 +60,7 @@ void loop() {
   sensors_event_t temp;
   sensors_event_t humidity;
   hts.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
-  Serial.print("Temperature: "); Serial.print(temp.temperature); Serial.println(" degrees C");
-  Serial.print("Humidity: "); Serial.print(humidity.relative_humidity); Serial.println("% rH");
+  Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temp.temperature, humidity.relative_humidity);
 
-  delay(5000);
+  delay(500);
 }
