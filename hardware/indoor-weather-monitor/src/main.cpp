@@ -10,6 +10,8 @@
 #define HTS_MISO 12
 #define HTS_MOSI 11
 
+#define TEST "TEST"
+
 Adafruit_HTS221 hts;
 void setup(void) {
   Serial.begin(115200);
@@ -25,6 +27,9 @@ void setup(void) {
     while (1) { delay(10); }
   }
   Serial.println("HTS221 Found!");
+
+  Serial.println(WIFI_SSID);
+  Serial.println(WIFI_PASS);
 
 //  hts.setDataRate(HTS221_RATE_1_HZ);
   Serial.print("Data rate set to: ");
@@ -45,5 +50,5 @@ void loop() {
   Serial.print("Temperature: "); Serial.print(temp.temperature); Serial.println(" degrees C");
   Serial.print("Humidity: "); Serial.print(humidity.relative_humidity); Serial.println("% rH");
 
-  delay(500);
+  delay(5000);
 }
