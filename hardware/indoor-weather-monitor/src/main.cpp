@@ -2,10 +2,16 @@
 #include <Wire.h>
 #include "WiFi.h"
 #include "ESPmDNS.h"
+#include "PubSubClient.h"
 #include <Adafruit_HTS221.h>
 #include <Adafruit_Sensor.h>
 
 #define HOSTNAME "temperature-tentacle"
+
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+
+const char* server = "192.168.0.69";
 
 Adafruit_HTS221 hts;
 void setup(void) {
@@ -44,6 +50,8 @@ void setup(void) {
   Serial.printf("\n connected!, ip: ");
   Serial.print(WiFi.localIP());
 
+  // setup mDNS - might not be nessesary
+
   if (!MDNS.begin(HOSTNAME)) {
         Serial.println("Error setting up MDNS responder!");
         while(1){
@@ -51,16 +59,36 @@ void setup(void) {
 
             // Maybe add a pin blink here
         }
-    }
+  }
+
+  // connect to mqtt broker
+
+  mqttClient.setServer(server, 1883);
+
+  // attempt to connect to the broker with "temperature_tentacle" id
+
+  if (mqttClient.connect(HOSTNAME)) {
+    Serial.println("Connected to mqtt broker established");
+  }
+  else {
+    Serial.println("failed connection");
+  }
 
 }
 
 void loop() {
 
+  mqttClient.loop();
+  
   sensors_event_t temp;
   sensors_event_t humidity;
   hts.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
   Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temp.temperature, humidity.relative_humidity);
+
+  // attempt to publish the data
+
+  mqttClient.publish("temperature", String(temp.temperature).c_str());
+  mqttClient.publish("relative_humidity", String(humidity.relative_humidity).c_str());
 
   delay(500);
 }
