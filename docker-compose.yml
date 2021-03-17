@@ -6,3 +6,15 @@ services:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
     ports:
       - 1883:1883
+
+  influxdb:
+    image: influxdb
+    container_name: influxdb
+    ports:
+      - 8086:8086
+    volumes:
+      - influxdb:/var/lib/influxdb2
+
+volumes:
+  influxdb:
+    
