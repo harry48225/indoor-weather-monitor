@@ -15,6 +15,17 @@ services:
     volumes:
       - influxdb:/var/lib/influxdb2
 
+  
+  tentaclebridge:
+    build: ./server
+    image: harry/tentacle-bridge
+    container_name: tentacle-bridge
+    ports: # shouldn't actually be needed can remove later
+      - 8888:3000
+    depends_on:
+      - mosquitto
+      - influxdb
+
 volumes:
   influxdb:
     
