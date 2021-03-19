@@ -20,6 +20,7 @@ services:
       - DOCKER_INFLUXDB_INIT_PASSWORD=octopodes
       - DOCKER_INFLUXDB_INIT_ORG=seabed
       - DOCKER_INFLUXDB_INIT_BUCKET=ocean
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=octopusoctopus
 
   
   tentaclebridge:

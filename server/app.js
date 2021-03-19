@@ -10,7 +10,7 @@ var client = mqtt.connect('mqtt://mosquitto') // should connect to the mosquitto
 const {InfluxDB} = require('@influxdata/influxdb-client')
 
 // You can generate a Token from the "Tokens Tab" in the UI
-const token = '0gKXk00l36A4E9djn6Z0BcYv77oJw5WkvcZlZHBwyPrzsX12YUdRnY0J_y5krbF1BcK5NkjasCIhHq_f04nVYw==' // should probably change this to be an environment variable?
+const token = 'octopusoctopus'
 const org = 'seabed'
 const bucket = 'ocean'
 
