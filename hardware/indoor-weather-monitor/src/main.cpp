@@ -13,12 +13,26 @@
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
-const char* SERVER_HOSTNAME = "fangorn";
+const char* SERVER_HOSTNAME = "helevorn";
 
 float temperature_offset = -1;
 
 
 Adafruit_HTS221 hts;
+
+void ensure_connected_to_wifi_and_server() {
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  while (!mqttClient.connect(HOSTNAME)) {
+    Serial.print(".");
+  }
+  
+
+  
+}
 
 void setup(void) {
   Serial.begin(115200);
@@ -50,11 +64,11 @@ void setup(void) {
   Serial.printf("trying to connect to: %s with password: %s \n", WIFI_SSID, WIFI_PASS);
 
   WiFi.setHostname(HOSTNAME);
+  
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-
   Serial.printf("\n connected!, ip: ");
   Serial.print(WiFi.localIP());
   Serial.println();
@@ -93,7 +107,7 @@ void setup(void) {
   mqttClient.setServer(server_ip, 1883);
 
   // attempt to connect to the broker with "temperature_tentacle" id
-  Serial.println("attempting connected to MQTT broker");
+  Serial.println("attempting connection to MQTT broker");
   while (!mqttClient.connect(HOSTNAME)) {
     Serial.print(".");
   }
@@ -128,6 +142,8 @@ void loop() {
   while (counter < SENSOR_DELAY) {
 
     mqttClient.loop();
+
+    ensure_connected_to_wifi_and_server();
     counter += 10;
     delay(10);
   }
