@@ -1,0 +1,6 @@
+default user and password is admin admin,
+
+then go to datasources and add influxdb as a source using the flux query language
+
+then you can use the dataexplorer (by connecting to the influx db instance at port 8086) to build some queries
+then click script to get the script and paste it into grafana
