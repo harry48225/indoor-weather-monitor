@@ -2,3 +2,4 @@ hardware/indoor-weather-monitor/WIFI_SSID
 hardware/indoor-weather-monitor/WIFI_PASS
 server/node_modules
 hardware/cad/case bottom.stl
+hardware/cad/case top.stl
