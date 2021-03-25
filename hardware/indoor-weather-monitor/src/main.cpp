@@ -8,7 +8,7 @@
 
 #define HOSTNAME "temperature-tentacle"
 
-#define SENSOR_DELAY 60000
+#define SENSOR_DELAY 20000
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
@@ -130,12 +130,16 @@ void loop() {
     Serial.println("waiting");
   }
   hts.setActive(false);
-  Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temp.temperature, humidity.relative_humidity);
+
+  float temperature = temp.temperature - 4; // Seems 4C too high
+  float relative_humidity = humidity.relative_humidity;
+
+  Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temperature, relative_humidity);
 
   // attempt to publish the data
 
-  mqttClient.publish("bedroom/shelf/temperature", String(temp.temperature).c_str());
-  mqttClient.publish("bedroom/shelf/relative_humidity", String(humidity.relative_humidity).c_str());
+  mqttClient.publish("bedroom/shelf/temperature", String(temperature).c_str());
+  mqttClient.publish("bedroom/shelf/relative_humidity", String(relative_humidity).c_str());
 
   int counter = 0;
 
