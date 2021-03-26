@@ -16,21 +16,31 @@ PubSubClient mqttClient(espClient);
 const char* SERVER_HOSTNAME = "helevorn";
 
 float temperature_offset = -1;
-
+int counter = 0;
 
 Adafruit_HTS221 hts;
 
 void ensure_connected_to_wifi_and_server() {
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
 
-  while (!mqttClient.connect(HOSTNAME)) {
-    Serial.print(".");
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    Serial.printf("trying to connect to: %s with password: %s \n", WIFI_SSID, WIFI_PASS);
+
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+
   }
   
-
+  if (!mqttClient.connected()) {
+      while (!mqttClient.connect(HOSTNAME)) {
+      Serial.print(".");
+    }
+  }
+  
+  
   
 }
 
@@ -47,7 +57,7 @@ void setup(void) {
   }
   Serial.println("HTS221 Found!");
 
-  hts.setDataRate(HTS221_RATE_ONE_SHOT);
+  hts.setDataRate(HTS221_RATE_1_HZ);
 
   Serial.print("Data rate set to: ");
   switch (hts.getDataRate()) {
@@ -56,6 +66,9 @@ void setup(void) {
    case HTS221_RATE_7_HZ: Serial.println("7 Hz"); break;
    case HTS221_RATE_12_5_HZ: Serial.println("12.5 Hz"); break;
   }
+
+  hts.setActive(true);
+  hts.begin_I2C();
 
   // connect to the wifi network
 
@@ -119,36 +132,25 @@ void setup(void) {
 void loop() {
 
   mqttClient.loop();
-  
+  ensure_connected_to_wifi_and_server();
+
   sensors_event_t temp;
   sensors_event_t humidity;
-  hts.setActive(true);
-  hts.begin_I2C();
-  delay(100);
-  while (!hts.getEvent(&humidity, &temp)) {// populate temp and humidity objects with fresh data
-    delay(100);
-    Serial.println("waiting");
+
+  if (counter > SENSOR_DELAY && hts.getEvent(&humidity, &temp)) {
+    float temperature = temp.temperature - 4.5; // Seems 4.5C too high
+    float relative_humidity = humidity.relative_humidity;
+
+    Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temperature, relative_humidity);
+
+    // attempt to publish the data
+
+    mqttClient.publish("bedroom/shelf/temperature", String(temperature).c_str());
+    mqttClient.publish("bedroom/shelf/relative_humidity", String(relative_humidity).c_str());
+
+    counter = 0;
   }
-  hts.setActive(false);
 
-  float temperature = temp.temperature - 4; // Seems 4C too high
-  float relative_humidity = humidity.relative_humidity;
-
-  Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temperature, relative_humidity);
-
-  // attempt to publish the data
-
-  mqttClient.publish("bedroom/shelf/temperature", String(temperature).c_str());
-  mqttClient.publish("bedroom/shelf/relative_humidity", String(relative_humidity).c_str());
-
-  int counter = 0;
-
-  while (counter < SENSOR_DELAY) {
-
-    mqttClient.loop();
-
-    ensure_connected_to_wifi_and_server();
-    counter += 10;
-    delay(10);
-  }
+  delay(10);
+  counter += 10;
 }
