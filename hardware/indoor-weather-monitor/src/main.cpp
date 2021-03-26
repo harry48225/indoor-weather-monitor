@@ -19,6 +19,7 @@ float temperature_offset = -1;
 int counter = 0;
 
 Adafruit_HTS221 hts;
+bool waiting_for_reading = false;
 
 void ensure_connected_to_wifi_and_server() {
 
@@ -57,7 +58,7 @@ void setup(void) {
   }
   Serial.println("HTS221 Found!");
 
-  hts.setDataRate(HTS221_RATE_1_HZ);
+  hts.setDataRate(HTS221_RATE_ONE_SHOT);
 
   Serial.print("Data rate set to: ");
   switch (hts.getDataRate()) {
@@ -137,19 +138,30 @@ void loop() {
   sensors_event_t temp;
   sensors_event_t humidity;
 
-  if (counter > SENSOR_DELAY && hts.getEvent(&humidity, &temp)) {
-    float temperature = temp.temperature - 4.5; // Seems 4.5C too high
-    float relative_humidity = humidity.relative_humidity;
-
-    Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temperature, relative_humidity);
-
-    // attempt to publish the data
-
-    mqttClient.publish("bedroom/shelf/temperature", String(temperature).c_str());
-    mqttClient.publish("bedroom/shelf/relative_humidity", String(relative_humidity).c_str());
-
-    counter = 0;
+  if (counter > SENSOR_DELAY && !waiting_for_reading) {
+    hts.setActive(true);
+    hts.begin_I2C();
+    waiting_for_reading = true;
   }
+
+  if (waiting_for_reading & hts.getEvent(&humidity, &temp)) {
+      float temperature = temp.temperature - 5; // Seems 5C too high
+      float relative_humidity = humidity.relative_humidity;
+
+      Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temperature, relative_humidity);
+
+      // attempt to publish the data
+
+      mqttClient.publish("bedroom/shelf/temperature", String(temperature).c_str());
+      mqttClient.publish("bedroom/shelf/relative_humidity", String(relative_humidity).c_str());
+
+      counter = 0;
+
+      hts.setActive(false);
+      waiting_for_reading = false;
+  }
+  
+  
 
   delay(10);
   counter += 10;
