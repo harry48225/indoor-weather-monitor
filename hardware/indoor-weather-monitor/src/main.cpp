@@ -141,10 +141,11 @@ void loop() {
   if (counter > SENSOR_DELAY && !waiting_for_reading) {
     hts.setActive(true);
     hts.begin_I2C();
+    delay(100);
     waiting_for_reading = true;
   }
 
-  if (waiting_for_reading & hts.getEvent(&humidity, &temp)) {
+  if (waiting_for_reading && hts.getEvent(&humidity, &temp)) {
       float temperature = temp.temperature - 5; // Seems 5C too high
       float relative_humidity = humidity.relative_humidity;
 
