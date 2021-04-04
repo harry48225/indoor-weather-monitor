@@ -9,14 +9,14 @@ import paho.mqtt.client as mqtt
 
 # MQTT setup
 
-client = mqtt.Client(client_id="plant-monitor")
-client.connect("helevorn.local")
+MQTT_SERVER = "fangorn.local"
 
+client = mqtt.Client(client_id="plant-monitor")
+
+client.connect(MQTT_SERVER)
 
 moisture_sensors = {"serrano": Moisture(1), "jalapeno": Moisture(2), "cayenne": Moisture(3)}
 light = LTR559()
-
-sleep(5)
 
 while True:
 
