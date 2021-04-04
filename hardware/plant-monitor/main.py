@@ -9,7 +9,7 @@ import paho.mqtt.client as mqtt
 
 # MQTT setup
 
-MQTT_SERVER = "fangorn.local"
+MQTT_SERVER = "helevorn.local"
 
 client = mqtt.Client(client_id="plant-monitor")
 
