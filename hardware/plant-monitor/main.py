@@ -23,16 +23,18 @@ while True:
     try:
         
         print("\r", end="")
-        for sensor in moisture_sensors:
+        for plant_name in moisture_sensors:
 
-            moisture = round(moisture_sensors[sensor].moisture, 5) # 5 dp
-            print(f"{sensor}, {moisture}Hz ", end= "")
+            sensor = moisture_sensors[plant_name]
 
-            # only publish if the reading is non-zero
-            # you get zero readings when the sensor is initalising
-        
-            if moisture != 0:
-                client.publish(f"conservatory/plants/moisture/{sensor}", moisture)
+            if sensor.active and sensor.new_data:
+                moisture = round(sensor.moisture, 6) # 6 dp
+                print(f"{plant_name}, {moisture}Hz ", end= "")
+
+                # only publish if the reading is non-zero
+                # you get zero readings when the sensor is initalising
+                client.publish(f"conservatory/plants/moisture/{plant_name}", moisture)
+                sleep(0.5)
 
         light.update_sensor()
         lux = round(light.get_lux())
@@ -41,7 +43,8 @@ while True:
         if lux != 0:
             client.publish("conservatory/plants/light", lux)
         
-    except :
+    except Exception as e:
+        print(e)
         print("an error occured")
     finally:
         client.loop()
