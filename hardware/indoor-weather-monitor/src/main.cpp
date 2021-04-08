@@ -24,12 +24,14 @@ bool waiting_for_reading = false;
 void ensure_connected_to_wifi_and_server() {
 
   if (WiFi.status() != WL_CONNECTED) {
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    
     Serial.printf("trying to connect to: %s with password: %s \n", WIFI_SSID, WIFI_PASS);
 
     while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
+      //try to connect
+      WiFi.mode(WIFI_STA);
+      WiFi.begin(WIFI_SSID, WIFI_PASS);
+      delay(5000); // wait 5 seconds
       Serial.print(".");
     }
 
@@ -37,7 +39,7 @@ void ensure_connected_to_wifi_and_server() {
   
   if (!mqttClient.connected()) {
       while (!mqttClient.connect(HOSTNAME)) {
-      Serial.print(".");
+        Serial.print(".");
     }
   }
   
@@ -80,7 +82,9 @@ void setup(void) {
   WiFi.setHostname(HOSTNAME);
   
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(5000);
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
     Serial.print(".");
   }
   Serial.printf("\n connected!, ip: ");
