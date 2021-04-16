@@ -29,8 +29,7 @@ void ensure_connected_to_wifi_and_server() {
 
     while (WiFi.status() != WL_CONNECTED) {
       //try to connect
-      WiFi.mode(WIFI_STA);
-      WiFi.begin(WIFI_SSID, WIFI_PASS);
+      WiFi.reconnect();
       delay(5000); // wait 5 seconds
       Serial.print(".");
     }
