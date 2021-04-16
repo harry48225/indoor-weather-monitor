@@ -9,7 +9,7 @@
 #define HOSTNAME "temperature-tentacle"
 
 #define SENSOR_DELAY 20000
-#define TEMPERATURE_OFFSET = -5;
+#define TEMPERATURE_OFFSET -5;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
