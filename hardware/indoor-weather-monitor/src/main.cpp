@@ -9,13 +9,13 @@
 #define HOSTNAME "temperature-tentacle"
 
 #define SENSOR_DELAY 20000
+#define TEMPERATURE_OFFSET = -5;
 
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 
 const char* SERVER_HOSTNAME = "helevorn";
 
-float temperature_offset = -1;
 int counter = 0;
 
 Adafruit_HTS221 hts;
@@ -150,7 +150,7 @@ void loop() {
   }
 
   if (waiting_for_reading && hts.getEvent(&humidity, &temp)) {
-      float temperature = temp.temperature - 5; // Seems 5C too high
+      float temperature = temp.temperature + TEMPERATURE_OFFSET; // Seems 5C too high
       float relative_humidity = humidity.relative_humidity;
 
       Serial.printf("\r Temperature: %f degrees C, Humidity: %f % rH", temperature, relative_humidity);
